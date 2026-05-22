@@ -34,7 +34,7 @@ export default function Navbar() {
           {/* Logo and brand */}
           <Link href="/" className="flex items-center space-x-2">
             <span className="text-xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 text-transparent bg-clip-text">
-              ConnectEd
+              MentorIQ
             </span>
           </Link>
 

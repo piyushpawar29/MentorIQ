@@ -6,7 +6,8 @@ export async function GET(request: Request, { params }: { params: { id: string }
 
   try {
     // Make a direct request to the backend API
-    const response = await axios.get(`http://localhost:5001/api/mentors/${id}`)
+    const backendUrl = process.env.BACKEND_URL || 'http://localhost:5001';
+    const response = await axios.get(`${backendUrl}/api/mentors/${id}`)
     return NextResponse.json(response.data)
   } catch (error) {
     console.error("Error fetching mentor:", error)

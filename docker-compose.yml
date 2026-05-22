@@ -1,0 +1,96 @@
+version: "3.9"
+
+services:
+  # ─── MongoDB ────────────────────────────────────────────────────────────────
+  mongodb:
+    image: mongo:7
+    container_name: connected_mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_DATABASE: ConnectEd
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - connected_network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # ─── Backend ────────────────────────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: connected_backend
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    environment:
+      PORT: 5001
+      MONGO_URI: mongodb://mongodb:27017/ConnectEd
+      NODE_ENV: production
+      ALLOWED_ORIGINS: http://localhost:3000,http://localhost:3001
+    ports:
+      - "5001:5001"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - connected_network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:5001/', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # ─── Seeder (runs once, seeds 25 mentors then exits) ────────────────────────
+  seeder:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: connected_seeder
+    restart: "no"
+    env_file:
+      - ./backend/.env
+    environment:
+      MONGO_URI: mongodb://mongodb:27017/ConnectEd
+    command: ["node", "seed.js"]
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - connected_network
+
+  # ─── Frontend ───────────────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./Frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:5001
+        NEXT_PUBLIC_BACKEND_URL: http://localhost:5001
+    container_name: connected_frontend
+    restart: unless-stopped
+    environment:
+      # Server-side env vars (used by Next.js API routes at runtime)
+      BACKEND_URL: http://backend:5001
+      NEXTAUTH_URL: http://localhost:3000
+      NEXTAUTH_SECRET: connected_nextauth_secret_2024
+    ports:
+      - "3000:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - connected_network
+
+volumes:
+  mongo_data:
+
+networks:
+  connected_network:
+    driver: bridge

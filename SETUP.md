@@ -1,4 +1,4 @@
-# ConnectEd Setup Guide
+# MentorIQ Setup Guide
 
 ## Fixing 403 Forbidden Errors
 

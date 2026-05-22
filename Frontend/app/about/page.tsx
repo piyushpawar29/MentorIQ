@@ -30,11 +30,6 @@ export default function AboutPage() {
     setAuthType(type)
     setShowAuthModal(true)
   }
-  
-  // Handle back action in modal
-  const handleBack = () => {
-    // Implement back functionality if needed
-  }
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-950">
       {/* Header/Navigation would be here, but it's conditionally rendered in the layout */}
@@ -53,7 +48,7 @@ export default function AboutPage() {
               transition={{ duration: 0.5 }}
               className="text-4xl md:text-5xl lg:text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-500 mb-6"
             >
-              About ConnectEd
+              About MentorIQ
             </motion.h1>
             <motion.p 
               initial={{ opacity: 0, y: 20 }}
@@ -80,7 +75,7 @@ export default function AboutPage() {
               <h2 className="text-3xl font-bold mb-6">Our Story</h2>
               <div className="space-y-4 text-gray-300">
                 <p>
-                  ConnectEd was born from a simple observation: despite living in an interconnected world, 
+                  MentorIQ was born from a simple observation: despite living in an interconnected world, 
                   finding the right mentor remains challenging for many students and young professionals.
                 </p>
                 <p>
@@ -104,7 +99,7 @@ export default function AboutPage() {
               <div className="relative bg-gray-800 border border-gray-700 rounded-xl overflow-hidden">
                 <Image 
                   src="/images/about-story.jpg" 
-                  alt="ConnectEd Story" 
+                  alt="MentorIQ Story" 
                   width={600} 
                   height={400}
                   className="w-full h-auto object-cover"
@@ -258,7 +253,7 @@ export default function AboutPage() {
           <div className="max-w-3xl mx-auto text-center mb-16">
             <h2 className="text-3xl font-bold mb-4">Meet the Team</h2>
             <p className="text-gray-300">
-              The passionate individuals behind ConnectEd's mission
+              The passionate individuals behind MentorIQ's mission
             </p>
           </div>
           
@@ -358,7 +353,6 @@ export default function AboutPage() {
             type={authType}
             onClose={() => setShowAuthModal(false)}
             onSwitchType={(type) => setAuthType(type)}
-            onBack={handleBack}
           />
         )}
       </AnimatePresence>

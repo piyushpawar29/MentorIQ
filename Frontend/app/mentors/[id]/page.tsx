@@ -10,7 +10,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const mentorId = params.id
   
   try {
-    const response = await fetch(`http://localhost:5001/api/mentors/${mentorId}`)
+    const backendUrl = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5001';
+    const response = await fetch(`${backendUrl}/api/mentors/${mentorId}`)
     
     if (!response.ok) {
       throw new Error(`Failed to fetch mentor metadata: ${response.status}`)
@@ -31,7 +32,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const mentorImage = mentor.user?.avatar || '/placeholder.svg?height=400&width=300'
     
     return {
-      title: `${mentorName} | ConnectEd Platform`,
+      title: `${mentorName} | MentorIQ Platform`,
       description: mentorBio,
       openGraph: {
         images: [mentorImage],
@@ -42,7 +43,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     
     // Fallback metadata
     return {
-      title: 'Mentor Profile | ConnectEd Platform',
+      title: 'Mentor Profile | MentorIQ Platform',
       description: 'Connect with expert mentors through our AI-powered matching platform.',
       openGraph: {
         images: ['/placeholder.svg?height=400&width=300'],

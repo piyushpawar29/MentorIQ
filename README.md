@@ -1,4 +1,4 @@
-# ConnectEd - Mentorship Platform
+# MentorIQ - Mentorship Platform
 
 A comprehensive mentorship platform connecting mentors and mentees.
 

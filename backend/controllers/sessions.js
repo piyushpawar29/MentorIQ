@@ -5,10 +5,14 @@ const MenteeProfile = require('../models/MenteeProfile');
 
 // @desc    Create a session
 // @route   POST /api/sessions
-// @access  Public (temporarily)
+// @access  Private
 exports.createSession = async (req, res) => {
   try {
     console.log('Session creation request received:', JSON.stringify(req.body, null, 2));
+    
+    if (!req.user) {
+      return res.status(401).json({ success: false, message: 'Authentication required' });
+    }
     
     // Extract session details from the request body with validation
     const { 
@@ -42,82 +46,40 @@ exports.createSession = async (req, res) => {
       });
     }
     
-    // For testing purposes, use a hardcoded mentee ID
-    // In production, this would come from the authenticated user (req.user.id)
-    const menteeId = '645f340293f48309432269c0'; // Replace with a valid mentee ID
+    // Use the authenticated user as the mentee
+    const menteeId = req.user.id;
     
     console.log('Processing session with mentorId:', mentorId);
     console.log('Processing session with menteeId:', menteeId);
     
-    // Find a valid mentor - first try the provided ID, then fallback to any mentor
+    // Find the mentor by ID
     let mentor = null;
     try {
-      // Try to find by ID
       mentor = await User.findById(mentorId);
-      
-      // If not found by ID, try to find by any other means
       if (!mentor) {
-        console.log('Mentor not found by ID, trying alternative methods');
-        // Try to find a mentor with this ID in MentorProfile
+        // Try via MentorProfile
         const mentorProfile = await MentorProfile.findById(mentorId);
         if (mentorProfile && mentorProfile.user) {
           mentor = await User.findById(mentorProfile.user);
-          console.log('Found mentor through profile:', mentor ? mentor._id : 'not found');
         }
-      }
-      
-      // If still not found, get any mentor for testing
-      if (!mentor) {
-        console.log('Mentor not found, using fallback');
-        mentor = await User.findOne({ role: 'mentor' });
-        console.log('Using fallback mentor:', mentor ? mentor._id : 'none available');
       }
     } catch (err) {
       console.error('Error finding mentor:', err.message);
-      // Try to find any mentor as fallback
-      mentor = await User.findOne({ role: 'mentor' });
-      console.log('Using fallback mentor after error:', mentor ? mentor._id : 'none available');
     }
     
     if (!mentor) {
       return res.status(404).json({
         success: false,
-        message: 'No valid mentor found. Please check the mentor ID or create a mentor first.'
+        message: 'Mentor not found. Please check the mentor ID.'
       });
     }
     
-    // Find a valid mentee - first try the provided ID, then fallback to any mentee
-    let mentee = null;
-    try {
-      mentee = await User.findById(menteeId);
-      
-      if (!mentee) {
-        console.log('Mentee not found by ID, trying alternative methods');
-        // Try to find a mentee with this ID in MenteeProfile
-        const menteeProfile = await MenteeProfile.findById(menteeId);
-        if (menteeProfile && menteeProfile.user) {
-          mentee = await User.findById(menteeProfile.user);
-          console.log('Found mentee through profile:', mentee ? mentee._id : 'not found');
-        }
-      }
-      
-      // If still not found, get any mentee for testing
-      if (!mentee) {
-        console.log('Mentee not found, using fallback');
-        mentee = await User.findOne({ role: 'mentee' });
-        console.log('Using fallback mentee:', mentee ? mentee._id : 'none available');
-      }
-    } catch (err) {
-      console.error('Error finding mentee:', err.message);
-      // Try to find any mentee as fallback
-      mentee = await User.findOne({ role: 'mentee' });
-      console.log('Using fallback mentee after error:', mentee ? mentee._id : 'none available');
-    }
-    
+    // Use the authenticated user as the mentee
+    const mentee = await User.findById(menteeId);
     if (!mentee) {
       return res.status(404).json({
         success: false,
-        message: 'No valid mentee found. Please check the mentee ID or create a mentee first.'
+        message: 'Mentee account not found.'
       });
     }
     
@@ -343,7 +305,7 @@ exports.deleteSession = async (req, res) => {
       });
     }
 
-    await session.remove();
+    await Session.findByIdAndDelete(req.params.id);
 
     res.status(200).json({
       success: true,

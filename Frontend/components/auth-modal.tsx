@@ -19,7 +19,6 @@ interface AuthModalProps {
   type: "login" | "signup";
   onClose: () => void;
   onSwitchType: (type: "login" | "signup") => void;
-  onBack: () => void; // new prop
 }
 
 export default function AuthModal({ type, onClose, onSwitchType }: AuthModalProps) {
@@ -82,25 +81,18 @@ export default function AuthModal({ type, onClose, onSwitchType }: AuthModalProp
   
   // Function to handle registration success
   const handleRegistrationSuccess = (data: any) => {
-    // Store token and user data
     if (data.token) {
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
-      
       // Clear loading and errors
       setLoading(false);
       setError("");
       
-      // Show success message
-      setSuccessMessage("Registration successful! Please login with your new account credentials.");
+      // Show success message briefly, then switch to login tab
+      setSuccessMessage("Registration successful! Please log in with your new credentials.");
       setShowSuccessMessage(true);
       
-      // // Reset form fields
-      // resetFormFields();
-      
-      // Switch to login tab after short delay
       setTimeout(() => {
         setShowSuccessMessage(false);
+        resetFormFields();
         onSwitchType("login");
       }, 1500);
     } else {
@@ -153,7 +145,8 @@ export default function AuthModal({ type, onClose, onSwitchType }: AuthModalProp
       
       console.log("Sending mentor registration data:", userData);
       
-      const res = await fetch("http://localhost:5001/api/auth/register", {
+      const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+      const res = await fetch(`${backendUrl}/api/auth/register`, {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
@@ -207,14 +200,15 @@ export default function AuthModal({ type, onClose, onSwitchType }: AuthModalProp
         role: "mentee",
         interests,
         goals,
-        preferredLanguages,
+        preferredLanguages: ["English"],
         educationLevel: 'Other',
         preferredCommunication: 'Any'
       };
       
       console.log("Sending mentee registration data:", userData);
       
-      const res = await fetch("http://localhost:5001/api/auth/register", {
+      const backendUrl2 = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+      const res = await fetch(`${backendUrl2}/api/auth/register`, {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
@@ -289,7 +283,8 @@ const handleSubmit = async (e: React.FormEvent) => {
       if (type === "login") {
         try {
           console.log("Attempting login with:", { email, password })
-          const res = await fetch("http://localhost:5001/api/auth/login", {
+          const loginUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+          const res = await fetch(`${loginUrl}/api/auth/login`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ email, password }),
@@ -302,9 +297,11 @@ const handleSubmit = async (e: React.FormEvent) => {
             throw new Error(data.message || "Invalid email or password")
           }
 
-          // Store token in localStorage
+          // Store token and user info in localStorage
           if (data.token) {
             localStorage.setItem('token', data.token);
+            localStorage.setItem('userRole', data.user.role);
+            localStorage.setItem('userId', data.user.id);
           }
 
           onClose()
@@ -356,17 +353,12 @@ const handleSubmit = async (e: React.FormEvent) => {
           }
         } else if (userRole === "mentee") {
           if (interests.length === 0) {
-            setError("Please select at least one area of interest");
+            setError("Please select at least one subject");
             setLoading(false);
             return;
           }
           if (!goals) {
             setError("Please describe your learning goals");
-            setLoading(false);
-            return;
-          }
-          if (preferredLanguages.length === 0) {
-            setError("Please select at least one preferred language");
             setLoading(false);
             return;
           }
@@ -402,7 +394,7 @@ const handleSubmit = async (e: React.FormEvent) => {
             role: userRole,
             interests,
             goals,
-            preferredLanguages,
+            preferredLanguages: ["English"],
             educationLevel: 'Other',
             preferredCommunication: 'Any'
           };
@@ -415,8 +407,9 @@ const handleSubmit = async (e: React.FormEvent) => {
           setLoading(true);
           setError("");
           
-          console.log("Sending registration request to:", "http://localhost:5001/api/auth/register");
-          const res = await fetch("http://localhost:5001/api/auth/register", {
+          const registerUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+          console.log("Sending registration request to:", `${registerUrl}/api/auth/register`);
+          const res = await fetch(`${registerUrl}/api/auth/register`, {
             method: "POST",
             headers: { 
               "Content-Type": "application/json",
@@ -681,112 +674,135 @@ const handleSubmit = async (e: React.FormEvent) => {
     </div>
   )
 
-  const renderMenteeProfileForm = () => (
-    <div className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="interests">Areas of Interest</Label>
-        <Select onValueChange={(value) => setInterests((prev) => [...prev, value])}>
-          <SelectTrigger className="bg-gray-800 border-gray-700">
-            <SelectValue placeholder="Select your interests" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="technology">Technology</SelectItem>
-            <SelectItem value="design">Design</SelectItem>
-            <SelectItem value="marketing">Marketing</SelectItem>
-            <SelectItem value="business">Business</SelectItem>
-            <SelectItem value="data-science">Data Science</SelectItem>
-          </SelectContent>
-        </Select>
-        <div className="flex flex-wrap gap-2 mt-2">
-          {interests.map((interest, index) => (
-            <Badge key={index} variant="outline" className="bg-gray-800 border-gray-700">
-              {interest}
-              <button className="ml-1" onClick={() => setInterests(interests.filter((_, i) => i !== index))}>
-                ×
-              </button>
-            </Badge>
+  const renderMenteeProfileForm = () => {
+    const subjectGroups = [
+      {
+        label: "1st Year (1st & 2nd Sem)",
+        subjects: [
+          "Engineering Mathematics",
+          "Physics",
+          "Chemistry",
+          "Basic Electrical/Electronics Engineering",
+          "Programming for Problem Solving (C language)",
+          "Engineering Graphics",
+        ],
+      },
+      {
+        label: "2nd Year (3rd & 4th Sem)",
+        subjects: [
+          "Data Structures",
+          "Object-Oriented Programming (Java/C++)",
+          "Discrete Structures",
+          "Operating Systems",
+          "Digital Systems",
+          "Database Management Systems",
+          "Computer Networks",
+        ],
+      },
+      {
+        label: "3rd Year (5th & 6th Sem)",
+        subjects: [
+          "Algorithms",
+          "Software Engineering",
+          "Theory of Computation",
+          "Compiler Design",
+          "Artificial Intelligence",
+          "Cloud Computing",
+          "Machine Learning",
+          "Cyber Security",
+        ],
+      },
+    ]
+
+    return (
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="subjects">Subjects You Need Help With</Label>
+          {subjectGroups.map((group) => (
+            <div key={group.label} className="space-y-1">
+              <p className="text-xs text-gray-400 font-medium pt-1">{group.label}</p>
+              <div className="flex flex-wrap gap-2">
+                {group.subjects.map((subject) => {
+                  const selected = interests.includes(subject)
+                  return (
+                    <button
+                      key={subject}
+                      type="button"
+                      onClick={() =>
+                        setInterests((prev) =>
+                          selected ? prev.filter((s) => s !== subject) : [...prev, subject]
+                        )
+                      }
+                      className={`px-2 py-1 rounded text-xs border transition-colors ${
+                        selected
+                          ? "bg-cyan-500/20 border-cyan-500 text-cyan-400"
+                          : "bg-gray-800 border-gray-700 text-gray-300 hover:border-gray-500"
+                      }`}
+                    >
+                      {subject}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
           ))}
+          {interests.length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-2">
+              {interests.map((subject, index) => (
+                <Badge key={index} variant="outline" className="bg-gray-800 border-gray-700">
+                  {subject}
+                  <button
+                    className="ml-1"
+                    onClick={() => setInterests(interests.filter((_, i) => i !== index))}
+                  >
+                    ×
+                  </button>
+                </Badge>
+              ))}
+            </div>
+          )}
         </div>
-      </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="goals">Learning Goals</Label>
-        <Textarea
-          id="goals"
-          placeholder="What do you hope to achieve through mentorship?"
-          className="bg-gray-800 border-gray-700"
-          value={goals}
-          onChange={(e) => setGoals(e.target.value)}
-          required
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="preferredLanguages">Preferred Languages</Label>
-        <Select onValueChange={(value) => setPreferredLanguages((prev) => [...prev, value])}>
-          <SelectTrigger className="bg-gray-800 border-gray-700">
-            <SelectValue placeholder="Select languages" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="english">English</SelectItem>
-            <SelectItem value="spanish">Spanish</SelectItem>
-            <SelectItem value="french">French</SelectItem>
-            <SelectItem value="german">German</SelectItem>
-            <SelectItem value="mandarin">Mandarin</SelectItem>
-            <SelectItem value="other">Other</SelectItem>
-          </SelectContent>
-        </Select>
-        <div className="flex flex-wrap gap-2 mt-2">
-          {preferredLanguages.map((language, index) => (
-            <Badge key={index} variant="outline" className="bg-gray-800 border-gray-700">
-              {language}
-              <button
-                className="ml-1"
-                onClick={() => setPreferredLanguages(preferredLanguages.filter((_, i) => i !== index))}
-              >
-                ×
-              </button>
-            </Badge>
-          ))}
+        <div className="space-y-2">
+          <Label htmlFor="goals">Learning Goals</Label>
+          <Textarea
+            id="goals"
+            placeholder="What do you hope to achieve through mentorship?"
+            className="bg-gray-800 border-gray-700"
+            value={goals}
+            onChange={(e) => setGoals(e.target.value)}
+            required
+          />
         </div>
-      </div>
 
-      <Button
-        onClick={(e) => {
-          e.preventDefault();
-          console.log("Mentee profile form button clicked");
-          // Verify fields are filled
-          if (interests.length === 0) {
-            setError("Please select at least one area of interest");
-            return;
-          }
-          if (!goals) {
-            setError("Please describe your learning goals");
-            return;
-          }
-          if (preferredLanguages.length === 0) {
-            setError("Please select at least one preferred language");
-            return;
-          }
-          
-          // All checks passed, perform direct submission
-          // Instead of calling handleSubmit, perform the submission directly
-          submitMenteeForm(e);
-        }}
-        className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700"
-        disabled={loading || interests.length === 0 || !goals || preferredLanguages.length === 0}
-      >
-        {loading ? (
-          <>
-            <GradientSpinner size={18} className="mr-2" />
-            Creating account...
-          </>
-        ) : (
-          "Complete Registration"
-        )}
-      </Button>
-    </div>
-  )
+        <Button
+          onClick={(e) => {
+            e.preventDefault();
+            if (interests.length === 0) {
+              setError("Please select at least one subject");
+              return;
+            }
+            if (!goals) {
+              setError("Please describe your learning goals");
+              return;
+            }
+            submitMenteeForm(e);
+          }}
+          className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700"
+          disabled={loading || interests.length === 0 || !goals}
+        >
+          {loading ? (
+            <>
+              <GradientSpinner size={18} className="mr-2" />
+              Creating account...
+            </>
+          ) : (
+            "Complete Registration"
+          )}
+        </Button>
+      </div>
+    )
+  }
 
   return (
     <motion.div
@@ -811,7 +827,7 @@ const handleSubmit = async (e: React.FormEvent) => {
           <div className="relative w-12 h-12 mx-auto mb-4">
             <div className="absolute inset-0 bg-cyan-500 rounded-full blur-md opacity-70"></div>
             <div className="relative flex items-center justify-center w-full h-full bg-gray-900 rounded-full border border-cyan-500 z-10">
-              <span className="font-bold text-cyan-500 text-lg">C</span>
+              <span className="font-bold text-cyan-500 text-lg">M</span>
             </div>
           </div>
           <h2 className="text-2xl font-bold">{type === "login" ? "Welcome back" : "Create your account"}</h2>

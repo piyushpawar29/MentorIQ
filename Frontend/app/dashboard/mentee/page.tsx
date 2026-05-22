@@ -83,7 +83,7 @@ export default function MenteeDashboard() {
   const [filteredMentors, setFilteredMentors] = useState<Mentor[]>([])
   const { toast } = useToast()
 
-  // Fetch data from API
+  // Fetch data from API — run once on mount
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -105,122 +105,89 @@ export default function MenteeDashboard() {
           return;
         }
 
-        const headers = {
-          Authorization: `Bearer ${token}`
-        };
+        const headers = { Authorization: `Bearer ${token}` };
 
+        // 1. Profile
+        let userId = '';
         try {
-          // Get mentee profile first
           const profileResponse = await axios.get('/api/auth/me', { headers });
           const menteeData = profileResponse.data;
-          
-          if (menteeData && (menteeData.success !== false)) {
+          if (menteeData && menteeData.success !== false) {
+            userId = menteeData.data?.user?._id || menteeData.id || '';
             setProfile({
-              id: menteeData.id || menteeData.data?.user?._id || "",
-              name: menteeData.name || menteeData.data?.user?.name || "",
-              email: menteeData.email || menteeData.data?.user?.email || "",
-              interests: menteeData.interests || menteeData.data?.profile?.interests || [],
-              goals: menteeData.goals || menteeData.data?.profile?.goals || "",
-              preferredLanguages: menteeData.preferredLanguages || menteeData.data?.profile?.preferredLanguages || [],
-              profilePicture: menteeData.avatar || menteeData.data?.user?.avatar || "",
+              id: userId,
+              name: menteeData.data?.user?.name || menteeData.name || "",
+              email: menteeData.data?.user?.email || menteeData.email || "",
+              interests: menteeData.data?.profile?.interests || menteeData.interests || [],
+              goals: menteeData.data?.profile?.goals || menteeData.goals || "",
+              preferredLanguages: menteeData.data?.profile?.preferredLanguages || [],
+              profilePicture: menteeData.data?.user?.avatar || "",
             });
-          } else {
-            throw new Error(menteeData?.error || "Failed to load profile data");
           }
         } catch (profileError) {
           console.error("Error fetching profile:", profileError);
-          toast({
-            title: "Profile Error",
-            description: "Could not load your profile. Please try again.",
-            variant: "destructive",
-          });
         }
-        
+
+        // 2. Sessions
         try {
-          // Fetch mentee sessions with auth header
-          console.log('Fetching sessions with token:', token ? 'Token exists' : 'No token');
-          
-          const sessionsResponse = await axios.get('http://localhost:5001/api/sessions', { 
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            } 
+          const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5001';
+          const sessionsResponse = await axios.get(`${backendUrl}/api/sessions`, {
+            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
           });
-          
-          console.log('Sessions API response:', sessionsResponse.data);
-          
-          if (sessionsResponse.data && sessionsResponse.data.data && Array.isArray(sessionsResponse.data.data)) {
-            // Map the backend data to the frontend Session interface format
-            const formattedSessions = sessionsResponse.data.data.map((session: {
-              _id: string;
-              mentor: {
-                _id: string;
-                name: string;
-                email: string;
-                avatar?: string;
-              };
-              date: string;
-              duration: number;
-              title: string;
-              status: string;
-            }) => ({
+          if (sessionsResponse.data?.data && Array.isArray(sessionsResponse.data.data)) {
+            const formattedSessions = sessionsResponse.data.data.map((session: any) => ({
               id: session._id,
-              mentorId: session.mentor._id,
-              mentorName: session.mentor.name,
-              mentorEmail: session.mentor.email,
-              mentorImage: session.mentor.avatar || '',
+              mentorId: session.mentor?._id || session.mentor,
+              mentorName: session.mentor?.name || 'Unknown Mentor',
+              mentorEmail: session.mentor?.email || '',
+              mentorImage: session.mentor?.avatar || '',
               date: session.date,
               duration: session.duration,
               topic: session.title,
               status: session.status
             }));
             setUpcomingSessions(formattedSessions);
-            console.log('Mentee sessions fetched successfully:', formattedSessions);
-          } else {
-            console.warn('Sessions data format unexpected:', sessionsResponse.data);
           }
         } catch (sessionsError) {
-         // console.error("Error fetching sessions:", sessionsError.response?.data || sessionsError.message);
-          // Continue with other data fetching even if sessions fail
+          console.error("Error fetching sessions:", sessionsError);
         }
-        
+
+        // 3. Recommended mentors
         try {
-          // Fetch recommended mentors based on mentee's profile
-          const userID = profile.id || 'default';
-          const recommendedResponse = await axios.get(`/api/match/${userID}`, { headers });
-          if (recommendedResponse.data && Array.isArray(recommendedResponse.data)) {
-            setRecommendedMentors(recommendedResponse.data);
+          if (userId) {
+            const recommendedResponse = await axios.get(`/api/match/${userId}`, { headers });
+            if (Array.isArray(recommendedResponse.data)) {
+              setRecommendedMentors(recommendedResponse.data);
+            }
           }
         } catch (recommendedError) {
           console.error("Error fetching recommended mentors:", recommendedError);
-          // Continue with other data fetching even if recommendations fail
         }
-        
+
+        // 4. All mentors
         try {
-          // Fetch all available mentors
           const allMentorsResponse = await axios.get('/api/mentors', { headers });
-          if (allMentorsResponse.data && allMentorsResponse.data.mentors) {
+          if (allMentorsResponse.data?.mentors) {
             setAllMentors(allMentorsResponse.data.mentors);
           }
         } catch (mentorsError) {
           console.error("Error fetching all mentors:", mentorsError);
-          // Continue even if all mentors fetch fails
         }
-        
+
         setLoading(false);
       } catch (error) {
-        console.error("Error fetching data:", error)
+        console.error("Error fetching data:", error);
         toast({
           title: "Error",
           description: "Failed to load your dashboard data. Please try again.",
           variant: "destructive",
-        })
-        setLoading(false)
+        });
+        setLoading(false);
       }
-    }
+    };
 
-    fetchData()
-  }, [toast, profile.id])
+    fetchData();
+  }, [toast]); // only run once on mount
 
   // Filter mentors based on search term and selected skills
   useEffect(() => {
@@ -283,10 +250,10 @@ export default function MenteeDashboard() {
             <div className="relative w-10 h-10">
               <div className="absolute inset-0 bg-cyan-500 rounded-full blur-md opacity-70"></div>
               <div className="relative flex items-center justify-center w-full h-full bg-gray-900 rounded-full border border-cyan-500 z-10">
-                <span className="font-bold text-cyan-500">C</span>
+                <span className="font-bold text-cyan-500">M</span>
               </div>
             </div>
-            <span className="font-bold text-xl">ConnectEd</span>
+            <span className="font-bold text-xl">MentorIQ</span>
           </Link>
               <div className="flex items-center space-x-4">
                 <Link href="/" passHref>
@@ -353,20 +320,19 @@ export default function MenteeDashboard() {
                         
                          
                          
-                        <a href="https://meet.google.com/bfy-jzcd-hxv" target="_blank" rel="noopener noreferrer">
+                        <a href={`https://meet.google.com/new`} target="_blank" rel="noopener noreferrer">
                         <Button variant="outline" className="border-cyan-500 text-cyan-500 hover:bg-cyan-950">
                           <Video className="h-4 w-4 mr-2" />
-                        Join Session
-                        
+                          Join Session
                         </Button>
-                        </a>  
+                        </a>
                         
                         {/* <Button variant="outline" className="border-gray-700 hover:bg-gray-800"
                         onClick={() => window.open(`mailto:${session.mentorEmail || "contact@mentorai.com"}`)}>
                           <MessageSquare className="h-4 w-4 mr-2" />
                           Message
                         </Button> */}
-                        <Link href={`/mentee/chat/${session.mentorId}`}>
+                        <Link href={`/dashboard/mentee/chat`}>
                         <Button variant="outline" className="border-gray-700 hover:bg-gray-800">
                           <MessageSquare className="h-4 w-4 mr-2" />
                           Message

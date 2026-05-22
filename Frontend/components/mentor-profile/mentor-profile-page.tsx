@@ -377,10 +377,10 @@ export default function MentorProfilePage({ mentorId }: MentorProfilePageProps) 
             <div className="relative w-10 h-10">
               <div className="absolute inset-0 bg-cyan-500 rounded-full blur-md opacity-70"></div>
               <div className="relative flex items-center justify-center w-full h-full bg-gray-900 rounded-full border border-cyan-500 z-10">
-                <span className="font-bold text-cyan-500">C</span>
+                <span className="font-bold text-cyan-500">M</span>
               </div>
             </div>
-            <span className="font-bold text-xl">ConnectEd</span>
+            <span className="font-bold text-xl">MentorIQ</span>
           </a>
               <div className="flex items-center space-x-4">
                 <a href="/">

@@ -59,10 +59,6 @@ export default function LandingPage() {
     setShowAuthModal(true)
   }
 
-  function handleBack(): void {
-    throw new Error("Function not implemented.")
-  }
-
   return (
     <div
       className={`min-h-screen bg-gradient-to-b from-gray-950 to-gray-900 text-white transition-colors duration-300 relative overflow-hidden`}
@@ -81,10 +77,10 @@ export default function LandingPage() {
             <div className="relative w-10 h-10">
               <div className="absolute inset-0 bg-cyan-500 rounded-full blur-md opacity-70"></div>
               <div className="relative flex items-center justify-center w-full h-full bg-gray-900 rounded-full border border-cyan-500 z-10">
-                <span className="font-bold text-cyan-500">C</span>
+                <span className="font-bold text-cyan-500">M</span>
               </div>
             </div>
-            <span className="font-bold text-xl">ConnectEd</span>
+            <span className="font-bold text-xl">MentorIQ</span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -267,7 +263,7 @@ export default function LandingPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.2 }}
               >
-                ConnectEd brings together learners and industry experts for personalized mentorship. Accelerate your
+                MentorIQ brings together learners and industry experts for personalized mentorship. Accelerate your
                 growth with guidance from professionals who've been there.
               </motion.p>
 
@@ -574,9 +570,9 @@ export default function LandingPage() {
             <Badge className="mb-4 bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 transition-colors">
               Simple Process
             </Badge>
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">How ConnectEd Works</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">How MentorIQ Works</h2>
             <p className="text-gray-400 max-w-2xl mx-auto">
-              Getting started with ConnectEd is simple. Follow these steps to begin your mentorship journey.
+              Getting started with MentorIQ is simple. Follow these steps to begin your mentorship journey.
             </p>
           </div>
 
@@ -810,7 +806,7 @@ export default function LandingPage() {
               transition={{ duration: 0.5, delay: 0.2 }}
               viewport={{ once: true }}
             >
-              Join ConnectEd today and get matched with mentors who can help you reach your full potential.
+              Join MentorIQ today and get matched with mentors who can help you reach your full potential.
             </motion.p>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -847,7 +843,7 @@ export default function LandingPage() {
                     <span className="font-bold text-cyan-500 text-xs">C</span>
                   </div>
                 </div>
-                <span className="font-bold text-lg">ConnectEd</span>
+                <span className="font-bold text-lg">MentorIQ</span>
               </Link>
               <p className="text-gray-400 text-sm mb-4">
                 Connecting learners with expert mentors through the power of AI.
@@ -919,7 +915,7 @@ export default function LandingPage() {
           </div>
 
           <div className="border-t border-gray-800 mt-12 pt-8 text-center">
-            <p className="text-gray-500 text-sm">© {new Date().getFullYear()} ConnectEd. All rights reserved.</p>
+            <p className="text-gray-500 text-sm">© {new Date().getFullYear()} MentorIQ. All rights reserved.</p>
           </div>
         </div>
       </footer>
@@ -928,7 +924,6 @@ export default function LandingPage() {
       <AnimatePresence>
         {showAuthModal && (
           <AuthModal
-            onBack={handleBack}
             type={authType}
             onClose={() => setShowAuthModal(false)}
             onSwitchType={(type) => setAuthType(type)}

@@ -1,14 +1,17 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
+const rateLimit = require('express-rate-limit');
 const connectDB = require('./config/db');
 const errorHandler = require('./middlewares/error');
 const http = require('http');
 const socketio = require('socket.io');
-const path = require('path');
 
-// Load env vars
-dotenv.config({ path: './config/config.env' });
+// Load env vars – try config/config.env first (local dev), fall back to .env (Docker)
+const envLoaded = dotenv.config({ path: './config/config.env' });
+if (envLoaded.error) {
+  dotenv.config();
+}
 
 // Connect to database
 connectDB();
@@ -18,11 +21,17 @@ const app = express();
 // Create HTTP server
 const server = http.createServer(app);
 
+// Allowed origins driven by env var so it works in any environment
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',')
+  : ['http://localhost:3000', 'http://localhost:3001'];
+
 // Initialize Socket.io
 const io = socketio(server, {
   cors: {
-    origin: '*',
-    methods: ['GET', 'POST']
+    origin: allowedOrigins,
+    methods: ['GET', 'POST'],
+    credentials: true
   }
 });
 
@@ -31,14 +40,23 @@ app.use(express.json());
 
 // Enable CORS
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:3001'],
+  origin: allowedOrigins,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
+// Rate limiting on auth endpoints
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 20,
+  message: { success: false, message: 'Too many requests, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // Define routes
-app.use('/api/auth', require('./routes/auth'));
+app.use('/api/auth', authLimiter, require('./routes/auth'));
 app.use('/api/mentors', require('./routes/mentors'));
 app.use('/api/mentees', require('./routes/mentees'));
 app.use('/api/sessions', require('./routes/sessions'));
@@ -47,48 +65,40 @@ app.use('/api/messages', require('./routes/messages'));
 
 // Base route
 app.get('/', (req, res) => {
-  res.json({ message: 'ConnectEd API - Welcome to the mentorship platform API' });
+  res.json({ message: 'MentorIQ API' });
 });
 
 // Error handler middleware
 app.use(errorHandler);
 
-// Set static folder in production
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, '../Frontend/build')));
-
-  app.get('*', (req, res) => {
-    res.sendFile(path.resolve(__dirname, '../Frontend', 'build', 'index.html'));
-  });
-}
-
 // Socket.io event handlers
 io.on('connection', (socket) => {
-  console.log('New client connected');
-
-  // Join a room (conversation)
+  // Join a conversation room
   socket.on('join', (conversationId) => {
-    socket.join(conversationId);
+    if (typeof conversationId === 'string') {
+      socket.join(conversationId);
+    }
   });
 
-  // Listen for new messages
+  // Relay messages to the conversation room
   socket.on('sendMessage', (message) => {
-    io.to(message.conversationId).emit('message', message);
+    if (message && typeof message.conversationId === 'string') {
+      io.to(message.conversationId).emit('message', message);
+    }
   });
 
   // Typing indicator
   socket.on('typing', (data) => {
-    socket.to(data.conversationId).emit('typing', data);
+    if (data && typeof data.conversationId === 'string') {
+      socket.to(data.conversationId).emit('typing', data);
+    }
   });
 
-  // Handle disconnect
-  socket.on('disconnect', () => {
-    console.log('Client disconnected');
-  });
+  socket.on('disconnect', () => {});
 });
 
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 5001;
 
 server.listen(PORT, () => {
-  console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+  console.log(`MentorIQ API running in ${process.env.NODE_ENV} mode on port ${PORT}`);
 });

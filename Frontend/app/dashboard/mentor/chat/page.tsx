@@ -32,7 +32,7 @@ export default function MentorChatPage() {
           ? token.slice(1, -1) 
           : token;
         
-        const response = await axios.get('http://localhost:5001/api/mentors/profile', {
+        const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5001'}/api/mentors/profile`, {
           headers: {
             Authorization: `Bearer ${formattedToken}`,
           },

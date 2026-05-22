@@ -1,6 +1,6 @@
-# ConnectEd Backend API
+# MentorIQ Backend API
 
-This is the backend API for the ConnectEd mentorship platform. It provides all the necessary endpoints for authentication, user management, mentorship sessions, and messaging.
+This is the backend API for the MentorIQ mentorship platform. It provides all the necessary endpoints for authentication, user management, mentorship sessions, and messaging.
 
 ## Setup Instructions
 

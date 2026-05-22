@@ -44,8 +44,8 @@ export default function NewConversation({ userRole, onSelectUser, onCancel }: Ne
         
         // If current user is a mentor, fetch mentees, and vice versa
         const endpoint = userRole === 'mentor' 
-          ? 'http://localhost:5001/api/mentees' 
-          : 'http://localhost:5001/api/mentors';
+          ? `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5001'}/api/mentees` 
+          : `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5001'}/api/mentors`;
         
         const response = await axios.get(endpoint, {
           headers: {

@@ -175,7 +175,7 @@ exports.deleteReview = async (req, res) => {
       });
     }
 
-    await review.remove();
+    await Review.findByIdAndDelete(req.params.id);
 
     // Update mentor's rating
     const allReviews = await Review.find({ mentor: review.mentor });

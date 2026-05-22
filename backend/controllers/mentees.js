@@ -167,6 +167,7 @@ exports.disconnectFromMentor = async (req, res) => {
 // @access  Private (Mentee only)
 exports.getConnectedMentors = async (req, res) => {
   try {
+    const MentorProfile = require('../models/MentorProfile');
     const menteeProfile = await MenteeProfile.findOne({ user: req.user.id });
 
     if (!menteeProfile) {
@@ -176,18 +177,21 @@ exports.getConnectedMentors = async (req, res) => {
       });
     }
 
-    // Get connected mentors with their profiles
-    const mentors = await Promise.all(
-      menteeProfile.mentorsConnected.map(async (mentorId) => {
-        const mentorUser = await User.findById(mentorId).select('name email avatar bio');
-        const mentorProfile = await MentorProfile.findOne({ user: mentorId });
-        
-        return {
-          user: mentorUser,
-          profile: mentorProfile
-        };
-      })
-    );
+    const ids = menteeProfile.mentorsConnected;
+
+    // Single batch query instead of N+1
+    const [mentorUsers, mentorProfiles] = await Promise.all([
+      User.find({ _id: { $in: ids } }).select('name email avatar bio'),
+      MentorProfile.find({ user: { $in: ids } })
+    ]);
+
+    const profileMap = {};
+    mentorProfiles.forEach(p => { profileMap[p.user.toString()] = p; });
+
+    const mentors = mentorUsers.map(u => ({
+      user: u,
+      profile: profileMap[u._id.toString()] || null
+    }));
 
     res.status(200).json({
       success: true,

@@ -44,71 +44,36 @@ export default function ReviewForm({ mentorId, onSuccess }: ReviewFormProps) {
     setLoading(true)
 
     try {
-      // Import the reviewAPI from our utility
       const { reviewAPI } = await import('@/lib/api');
-      
-      // Log the mentorId for debugging
-      console.log('Submitting review for mentor with ID:', mentorId);
       
       if (!mentorId) {
         throw new Error('Mentor ID is missing or undefined');
       }
-      
-      try {
-        // Use the addReview method with the correct field names expected by the backend
-        const apiResponse = await reviewAPI.addReview(mentorId, {
-          rating,
-          text: comment // Send 'text' instead of 'comment' to match the Review model
-        });
-        
-        console.log("Review submission response:", apiResponse.data);
-        
-        if (apiResponse.status !== 201 && apiResponse.status !== 200) {
-          throw new Error(apiResponse.data.message || apiResponse.data.error || 'Failed to submit review');
-        }
-        
-        return apiResponse;
-      } catch (error: any) {
-        console.error('Error in review API call:', error);
-        
-        // Get the error message
-        const errorMessage = error.response?.data?.message || error.message || 'Failed to submit review';
-        
-        // For other errors, try a direct API call as a fallback
-        try {
-          const token = localStorage.getItem('token');
-          const directResponse = await fetch(`http://localhost:5001/api/mentors/${mentorId}/reviews`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({ rating, text: comment })
-          });
-          
-          const responseData = await directResponse.json();
-          console.log("Direct API response:", responseData);
-          
-          if (!directResponse.ok) {
-            throw new Error(responseData.message || 'Failed to submit review');
-          }
-          
-          return {
-            status: directResponse.status,
-            data: responseData
-          };
-        } catch (fallbackError) {
-          console.error('Fallback API call failed:', fallbackError);
-          throw error; // Throw the original error
-        }
+
+      const token = localStorage.getItem('token');
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5001';
+
+      const directResponse = await fetch(`${backendUrl}/api/mentors/${mentorId}/reviews`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({ rating, comment })
+      });
+
+      const responseData = await directResponse.json();
+
+      if (!directResponse.ok) {
+        throw new Error(responseData.message || 'Failed to submit review');
       }
 
       toast({
         title: "Review submitted",
         description: "Thank you for your feedback!",
-      })
+      });
 
-      onSuccess()
+      onSuccess();
     } catch (error) {
       console.error("Error submitting review:", error)
       toast({

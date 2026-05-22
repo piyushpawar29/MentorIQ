@@ -1,7 +1,7 @@
 {
   "name": "connected-backend",
   "version": "1.0.0",
-  "description": "ConnectEd mentorship platform backend API",
+  "description": "MentorIQ mentorship platform backend API",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -22,7 +22,8 @@
     "cloudinary": "^1.41.0",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
-    "express": "^5.1.0",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
     "express-validator": "^7.0.1",
     "jsonwebtoken": "^9.0.2",
     "mongodb": "^6.16.0",

@@ -7,22 +7,22 @@ import { ThemeProvider } from "@/components/theme-provider"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "ConnectEd - Expert Mentorship Platform",
+  title: "MentorIQ - Expert Mentorship Platform",
   description:
     "Connect with expert mentors through our AI-powered matching platform. Accelerate your career growth with personalized mentorship.",
   keywords: "mentorship, education, career growth, professional development, mentors, coaching",
   openGraph: {
-    title: "ConnectEd - Expert Mentorship Platform",
+    title: "MentorIQ - Expert Mentorship Platform",
     description:
       "Connect with expert mentors through our AI-powered matching platform. Accelerate your career growth with personalized mentorship.",
-    url: "https://connected.com",
-    siteName: "ConnectEd",
+    url: "https://mentoriq.com",
+    siteName: "MentorIQ",
     images: [
       {
         url: "/og-image.jpg",
         width: 1200,
         height: 630,
-        alt: "ConnectEd Platform",
+        alt: "MentorIQ Platform",
       },
     ],
     locale: "en_US",
@@ -54,8 +54,3 @@ export default function RootLayout({
     </html>
   )
 }
-
-
-
-import './globals.css'
-import BackgroundScene from "@/components/background-scene"

@@ -5,7 +5,8 @@ import { io } from 'socket.io-client';
 export async function GET() {
   try {
     // Create a socket connection to the backend
-    const socket = io('http://localhost:5001');
+    const backendUrl = process.env.BACKEND_URL || 'http://localhost:5001';
+    const socket = io(backendUrl);
     
     // Wait for connection
     await new Promise((resolve, reject) => {

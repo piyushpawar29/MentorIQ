@@ -83,7 +83,7 @@ export default function Chat({ userId, userName, userAvatar, userRole }: ChatPro
     sendMessage: emitMessage, 
     sendTyping 
   } = useSocket({
-    url: 'http://localhost:5001',
+    url: process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5001',
     autoConnect: true,
   });
 
@@ -102,7 +102,7 @@ export default function Chat({ userId, userName, userAvatar, userRole }: ChatPro
         ? token.slice(1, -1) 
         : token;
       
-      const response = await axios.get('http://localhost:5001/api/messages/conversations', {
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5001'}/api/messages/conversations`, {
         headers: {
          Authorization: `Bearer ${formattedToken}`,
         },
@@ -150,7 +150,7 @@ export default function Chat({ userId, userName, userAvatar, userRole }: ChatPro
         ? token.slice(1, -1) 
         : token;
       
-      const response = await axios.get(`http://localhost:5001/api/messages/${partnerId}`, {
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5001'}/api/messages/${partnerId}`, {
         headers: {
          Authorization: `Bearer ${formattedToken}`,
         },
@@ -238,7 +238,7 @@ export default function Chat({ userId, userName, userAvatar, userRole }: ChatPro
       
       // Send via API
       const response = await axios.post(
-        'http://localhost:5001/api/messages',
+        `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5001'}/api/messages`,
         {
           receiver: activeConversation,
           text,
@@ -352,14 +352,14 @@ export default function Chat({ userId, userName, userAvatar, userRole }: ChatPro
       // Use the correct endpoints based on user role
       if (userRole === 'mentor') {
         // Mentors need to see mentees
-        response = await axios.get('http://localhost:5001/api/mentors', {
+        response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5001'}/api/mentors`, {
           headers: {
             Authorization: `Bearer ${formattedToken}`,
           },
         });
       } else {
         // Mentees need to see mentors
-        response = await axios.get('http://localhost:5001/api/mentors', {
+        response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5001'}/api/mentors`, {
           headers: {
             Authorization: `Bearer ${formattedToken}`,
           },

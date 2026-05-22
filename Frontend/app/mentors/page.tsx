@@ -8,12 +8,12 @@ import { Badge } from "@/components/ui/badge"
 export const metadata: Metadata = {
   title: "Browse Mentors | MentorAI Platform",
   description: "Find the perfect mentor to help you achieve your career goals.",
-  metadataBase: new URL(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001')
+  metadataBase: new URL('http://localhost:3000')
 }
 
 export default async function MentorsPage() {
-  // Ensure we have a complete URL for the fetch call
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+  // Use BACKEND_URL (server-side) for SSR fetches, falling back to NEXT_PUBLIC_API_URL
+  const apiBaseUrl = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
   const apiUrl = new URL('/api/mentors', apiBaseUrl);
   
   // Add proper error handling for the fetch call

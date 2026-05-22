@@ -14,21 +14,34 @@ exports.getConversations = async (req, res) => {
       ]
     }).sort({ createdAt: -1 });
 
-    // Extract unique conversation partners
+    // Extract unique conversation partners with accurate unread counts
     const conversationPartners = new Set();
     const conversations = [];
 
+    // Build a map of unread counts per partner first
+    const unreadByPartner = {};
     messages.forEach(message => {
-      const partnerId = message.sender.toString() === req.user.id ? 
-        message.receiver.toString() : message.sender.toString();
-      
+      const isIncoming = message.sender.toString() !== req.user.id && !message.isRead;
+      const partnerId = message.sender.toString() === req.user.id
+        ? message.receiver.toString()
+        : message.sender.toString();
+      if (isIncoming) {
+        unreadByPartner[partnerId] = (unreadByPartner[partnerId] || 0) + 1;
+      }
+    });
+
+    messages.forEach(message => {
+      const partnerId = message.sender.toString() === req.user.id
+        ? message.receiver.toString()
+        : message.sender.toString();
+
       if (!conversationPartners.has(partnerId)) {
         conversationPartners.add(partnerId);
         conversations.push({
           partnerId,
           lastMessage: message.text,
           lastMessageDate: message.createdAt,
-          unread: message.sender.toString() !== req.user.id && !message.isRead ? 1 : 0
+          unread: unreadByPartner[partnerId] || 0
         });
       }
     });
@@ -168,7 +181,7 @@ exports.deleteMessage = async (req, res) => {
       });
     }
 
-    await message.remove();
+    await Message.findByIdAndDelete(req.params.id);
 
     res.status(200).json({
       success: true,

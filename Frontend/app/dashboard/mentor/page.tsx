@@ -21,63 +21,7 @@ import {
 import axios from "axios"
 import GradientSpinner from "@/components/ui/gradient-spinner"
 import { cn } from "@/lib/utils"
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
 import Chat from "@/components/chat/Chat"
-
-// // Mock data for the mentor profile
-// const mockMentorProfile = {
-//   id: "m123",
-//   name: "Dr. Sarah Johnson",
-//   email: "sarah.johnson@example.com",
-//   bio: "Former lead AI researcher at Google with 10+ years of experience in machine learning and neural networks. I help aspiring AI researchers and practitioners develop cutting-edge skills and navigate their career path.",
-//   skills: ["Machine Learning", "Neural Networks", "Computer Vision", "Research Methods"],
-//   experience: "10+ years",
-//   languages: ["English", "Mandarin"],
-//   communicationPreference: "video",
-//   availability: [
-//     { day: "Monday", slots: ["10:00 AM - 11:00 AM", "2:00 PM - 3:00 PM"] },
-//     { day: "Wednesday", slots: ["1:00 PM - 2:00 PM", "4:00 PM - 5:00 PM"] },
-//     { day: "Friday", slots: ["9:00 AM - 10:00 AM", "3:00 PM - 4:00 PM"] },
-//   ],
-//   profilePicture: "/placeholder.svg?height=200&width=200",
-//   rating: 4.9,
-//   reviewCount: 127,
-// }
-
-// // Mock data for upcoming sessions
-// const mockUpcomingSessions = [
-//   {
-//     id: "s1",
-//     menteeId: "mentee1",
-//     menteeName: "Michael Chen",
-//     menteeImage: "/placeholder.svg?height=40&width=40",
-//     date: "2023-11-15T14:00:00",
-//     duration: 60,
-//     topic: "Introduction to Neural Networks",
-//     status: "confirmed",
-//   },
-//   {
-//     id: "s2",
-//     menteeId: "mentee2",
-//     menteeName: "Jessica Williams",
-//     menteeImage: "/placeholder.svg?height=40&width=40",
-//     date: "2023-11-17T10:00:00",
-//     duration: 45,
-//     topic: "Career Transition to AI Research",
-//     status: "confirmed",
-//   },
-//   {
-//     id: "s3",
-//     menteeId: "mentee3",
-//     menteeName: "David Rodriguez",
-//     menteeImage: "/placeholder.svg?height=40&width=40",
-//     date: "2023-11-20T15:30:00",
-//     duration: 30,
-//     topic: "Research Paper Review",
-//     status: "pending",
-//   },
-// ]
 
 interface Profile {
   id: string
@@ -105,64 +49,14 @@ interface Session {
   status: string
 }
 
-// Debug token formatting helper
-const debugToken = (token: string | null) => {
-  if (!token) {
-    console.error("DEBUG: Token is null or empty");
-    return false;
-  }
-
-  console.log("DEBUG: Token length:", token.length);
-  console.log("DEBUG: First 10 chars:", token.substring(0, 10) + "...");
-  
-  // Check if token is wrapped in quotes
-  const isQuoted = token.startsWith('"') && token.endsWith('"');
-  console.log("DEBUG: Token is quoted:", isQuoted);
-  
-  // Check if token looks like a JWT (three parts separated by dots)
-  const jwtFormat = /^[A-Za-z0-9-_=]+\.[A-Za-z0-9-_=]+\.?[A-Za-z0-9-_.+/=]*$/;
-  const formattedToken = isQuoted ? token.slice(1, -1) : token;
-  const isJwtFormat = jwtFormat.test(formattedToken);
-  console.log("DEBUG: Is JWT format:", isJwtFormat);
-  
-  return isJwtFormat;
-};
-
-// Debug axios response handler
-const debugAxiosResponse = (response: any, source: string) => {
-  console.log(`DEBUG ${source} response:`, {
-    status: response.status,
-    statusText: response.statusText,
-    headers: response.headers,
-    hasData: !!response.data
-  });
-  
-  if (response.data) {
-    console.log(`DEBUG ${source} data:`, {
-      success: response.data.success,
-      message: response.data.message,
-      dataKeys: response.data.data ? Object.keys(response.data.data) : 'no data'
-    });
-  }
-};
-
-// Debug axios error handler
-const debugAxiosError = (error: any, source: string) => {
-  console.error(`DEBUG ${source} error:`, {
-    message: error.message,
-    code: error.code,
-    hasResponse: !!error.response,
-    hasRequest: !!error.request
-  });
-  
-  if (error.response) {
-    console.error(`DEBUG ${source} response error:`, {
-      status: error.response.status,
-      statusText: error.response.statusText,
-      data: error.response.data
-    });
-  }
-};
+// Format session date for display
+const formatSessionDate = (dateString: string) => {
+  const date = new Date(dateString)
+  return date.toLocaleDateString("en-US", {
+    weekday: "short", month: "short", day: "numeric",
+    year: "numeric", hour: "2-digit", minute: "2-digit",
+  })
+}
 
 export default function MentorDashboard() {
   const [profile, setProfile] = useState<Profile>({
@@ -184,15 +78,12 @@ export default function MentorDashboard() {
   const [backendAvailable, setBackendAvailable] = useState(false)
   const { toast } = useToast()
 const checkBackendStatus = async () => {
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5001';
     try {
-      const response = await axios.get('http://localhost:5001/api/auth/test', {
-        timeout: 3000 // 3 second timeout
-      });
-      debugAxiosResponse(response, 'Backend status check');
+      await axios.get(`${backendUrl}/api/auth/test`, { timeout: 3000 });
       setBackendAvailable(true);
       return true;
     } catch (error) {
-      debugAxiosError(error, 'Backend status check');
       setBackendAvailable(false);
       return false;
     }
@@ -304,17 +195,15 @@ const checkBackendStatus = async () => {
         
         // First check if backend is available without authentication
         try {
-          // Simple test to see if backend is responding
-          const testResponse = await axios.get('http://localhost:5001/api/auth/test', { timeout: 3000 });
-          debugAxiosResponse(testResponse, 'Backend test');
+          const backendTestUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5001';
+          await axios.get(`${backendTestUrl}/api/auth/test`, { timeout: 3000 });
           setBackendAvailable(true);
         } catch (testError) {
-          debugAxiosError(testError, 'Backend test');
           setBackendAvailable(false);
           setLoading(false);
           toast({
             title: "Backend Server Unavailable",
-            description: "Cannot connect to the backend server. Please ensure it's running at http://localhost:5001",
+            description: `Cannot connect to the backend server. Please ensure it's running at ${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5001'}`,
             variant: "destructive",
           });
           // Continue anyway to show UI with mock data
@@ -340,15 +229,9 @@ const checkBackendStatus = async () => {
           return;
         }
         
-        // Debug token format before applying any transformations
-        console.log("Original token format:");
-        debugToken(token);
-        
         // Ensure token is properly formatted (without extra quotes)
         if (token.startsWith('"') && token.endsWith('"')) {
           token = token.slice(1, -1);
-          console.log("After removing quotes:");
-          debugToken(token);
         }
         
         // Fetch sessions first to ensure they appear on the dashboard
@@ -368,15 +251,9 @@ const checkBackendStatus = async () => {
 
         // Try direct API call first
         try {
-          console.log("Attempting direct API call to backend");
-          const response = await axios.get(
-            'http://localhost:5001/api/mentors/profile', 
-            { headers, timeout: 5000 }
-          );
+          const directApiUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5001';
+          const response = await axios.get(`${directApiUrl}/api/mentors/profile`, { headers, timeout: 5000 });
           
-          debugAxiosResponse(response, 'Direct API');
-          
-          // Transform the data from the backend format to the frontend format
           const { user, profile } = response.data.data;
           const transformedData = {
             id: user?.id || "",
@@ -401,14 +278,9 @@ const checkBackendStatus = async () => {
           return;
           
         } catch (error: any) {
-          debugAxiosError(error, 'Direct API');
-          
           // If direct API call fails, try Next.js API route
           try {
             const response = await axios.get('/api/mentors/profile', { headers });
-            debugAxiosResponse(response, 'Next.js API');
-            
-            // Ensure data is properly formatted
             const mentorData = response.data;
             
             // Set default values for potentially missing fields
@@ -426,8 +298,7 @@ const checkBackendStatus = async () => {
             setProfile(transformedData);
             
           } catch (apiError: any) {
-            debugAxiosError(apiError, 'Next.js API');
-            throw new Error("Failed to fetch mentor data from both direct API and API routes");
+            throw new Error("Failed to fetch mentor profile");
           }
         }
         
@@ -536,7 +407,7 @@ const checkBackendStatus = async () => {
             <div className="bg-red-500/10 border border-red-500 rounded-lg p-8 max-w-lg text-center">
               <h2 className="text-2xl font-bold text-red-400 mb-4">Backend Server Unavailable</h2>
               <p className="text-gray-300 mb-6">
-                Cannot connect to the backend server at <span className="font-mono bg-gray-800 px-2 py-1 rounded">http://localhost:5001</span>
+                Cannot connect to the backend server at <span className="font-mono bg-gray-800 px-2 py-1 rounded">{process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5001'}</span>
               </p>
               <div className="space-y-4">
                 <p className="text-gray-400">
@@ -572,10 +443,10 @@ const checkBackendStatus = async () => {
             <div className="relative w-10 h-10">
               <div className="absolute inset-0 bg-cyan-500 rounded-full blur-md opacity-70"></div>
               <div className="relative flex items-center justify-center w-full h-full bg-gray-900 rounded-full border border-cyan-500 z-10">
-                <span className="font-bold text-cyan-500">C</span>
+                <span className="font-bold text-cyan-500">M</span>
               </div>
             </div>
-            <span className="font-bold text-xl">ConnectEd</span>
+            <span className="font-bold text-xl">MentorIQ</span>
           </Link>
           <div className="flex items-center space-x-4">
             <Link href="/" passHref>
