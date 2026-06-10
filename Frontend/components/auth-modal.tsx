@@ -145,7 +145,7 @@ export default function AuthModal({ type, onClose, onSwitchType }: AuthModalProp
       
       console.log("Sending mentor registration data:", userData);
       
-      const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
       const res = await fetch(`${backendUrl}/api/auth/register`, {
         method: "POST",
         headers: { 
@@ -207,7 +207,7 @@ export default function AuthModal({ type, onClose, onSwitchType }: AuthModalProp
       
       console.log("Sending mentee registration data:", userData);
       
-      const backendUrl2 = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+      const backendUrl2 = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
       const res = await fetch(`${backendUrl2}/api/auth/register`, {
         method: "POST",
         headers: { 
@@ -283,7 +283,7 @@ const handleSubmit = async (e: React.FormEvent) => {
       if (type === "login") {
         try {
           console.log("Attempting login with:", { email, password })
-          const loginUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+          const loginUrl = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
           const res = await fetch(`${loginUrl}/api/auth/login`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -407,7 +407,7 @@ const handleSubmit = async (e: React.FormEvent) => {
           setLoading(true);
           setError("");
           
-          const registerUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+          const registerUrl = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
           console.log("Sending registration request to:", `${registerUrl}/api/auth/register`);
           const res = await fetch(`${registerUrl}/api/auth/register`, {
             method: "POST",
